@@ -7,9 +7,10 @@
 
 try {
  $conexion = mysqli_connect($host ,$user, $password,$db);
-   if ($conexion){ echo "Conectado.... a proyectgestioncomunidad";}
+   if ($conexion);
      } catch (Exception $ex){
        echo $ex->getMessage();
 }
+
 
 ?>

@@ -1,47 +1,78 @@
 <?php include("../template/cabecera.php"); ?>
-
+<?php include("../configuracion/conexion.php"); ?>
+<?php include("../configuracion/adjuntos.php"); ?>
 
 <?php
-    include("../configuracion/conexion.php");
-    //$id = $_SESSION['usuario']['id_comunidad'];
-    $tipo=(isset($_POST['tipo']))?$_POST['tipo']:"";    
-    $fecha=(isset($_POST['fecha']))?$_POST['fecha']:"";    
-    $concepto=(isset($_POST['concepto']))?$_POST['concepto']:"";
-    $cantidad=(isset($_POST['cantidad']))?$_POST['cantidad']:"";
-    $adjunto=(isset($FILES['adjunto']['name']))?$FILES['archivo']['name']:"";
+ print_r($_FILES);
+ $id_comunidad =  $_SESSION['usuario']['id_comunidad'];
+ $id_movimiento=(isset($_POST['id_movimiento']))?$_POST['id_movimiento']:"";
+ $tipo=(isset($_POST['tipo']))?$_POST['tipo']:"";        
+ $fecha=(isset($_POST['fecha']))?$_POST['fecha']:"";       
+ $concepto=(isset($_POST['concepto']))?$_POST['concepto']:"";
+ $cantidad=(isset($_POST['cantidad']))?$_POST['cantidad']:"";
+ if ($_SERVER['REQUEST_METHOD'] === 'POST'){
+    if (isset($_FILES['adjunto'])){
+      $adjunto= $_FILES['adjunto']['size'] != 0 ? adjuntar_archivo("adjunto"): "";
+    }else{
+      $adjunto=(isset($_POST['adjunto']))?$_POST['adjunto']:"";
+    }
+   
     $accion=(isset($_POST['accion']))?$_POST['accion']:"";
 
 
     switch($accion){
 
         case "add":
-            //INSERT INTO `movimientos` (`id`, `tipo`, `fecha`, `concepto`, `cantidad`, `adjunto`, `id_comunidad`)
-            $sentenciaSQL= $conexion->prepare("INSERT INTO movimientos (fecha,tipo,concepto,cantidad,adjunto,id_comunidad) VALUES ('$fecha', '$tipo', '$concepto', '$cantidad', '$adjunto', $id);");
-            //$sentenciaSQL->bind_param(':tipo',$tipo);
-            //$sentenciaSQL->bind_param(':fecha',$fecha);
-            //$sentenciaSQL->bind_param(':concepto',$concepto);
-            //$sentenciaSQL->bind_param(':cantidad',$cantidad);
-            //$sentenciaSQL->bind_param(':adjunto',$adjunto);
-            $sentenciaSQL->execute();           
+          if (strcmp($adjunto,"") !=0){
+            $stmt = mysqli_prepare ($conexion, "INSERT INTO movimientos (tipo,fecha,concepto,cantidad,adjunto,id_comunidad) VALUES (?, ?, ?, ?, ?, ?);");
+            mysqli_stmt_bind_param($stmt, 'sssdsi', $tipo, $fecha, $concepto, $cantidad, $adjunto, $id_comunidad ); 
+          }else{
+            $stmt = mysqli_prepare ($conexion, "INSERT INTO movimientos (tipo,fecha,concepto,cantidad,id_comunidad) VALUES (?, ?, ?, ?, ?);");
+            mysqli_stmt_bind_param($stmt, 'sssdi', $tipo, $fecha, $concepto, $cantidad, $id_comunidad ); 
+          }
+            mysqli_stmt_execute($stmt);          
             break;
 
         case "modificar":
-            echo "Pulsado botón modificar";
+          if (strcmp($adjunto,"") !=0){
+            $stmt = mysqli_prepare ($conexion, "UPDATE movimientos SET tipo = ?, fecha = ?, concepto = ?, cantidad= ?, adjunto=? WHERE id=?");
+            
+            mysqli_stmt_bind_param($stmt, 'sssdsi', $tipo, $fecha, $concepto, $cantidad, $adjunto, $id_movimiento );
+          }
+          else{
+            $stmt = mysqli_prepare ($conexion, "UPDATE movimientos SET tipo = ?, fecha = ?, concepto = ?, cantidad= ? WHERE id=?");
+            
+            mysqli_stmt_bind_param($stmt, 'sssdi', $tipo, $fecha, $concepto, $cantidad, $id_movimiento );
+          }  
+            
+            mysqli_stmt_execute($stmt);
+
+         
+        
             break;
+        case "cancelar":
+             
+              break;
+       
+
         case "borrar":
-            echo "Pulsado botón borrar";
-            break;
+          //die("borrando $id_movimiento");
+              $stmt = mysqli_prepare ($conexion, "DELETE FROM movimientos WHERE id=?");
+              mysqli_stmt_bind_param($stmt, 'i' , $id_movimiento);
+              mysqli_stmt_execute($stmt);
+              break;
     }
-
-    function buscar_movimientos($id){
-      $sentenciaSQL= $conexion->prepare("select * from movimientos where id_comunidad = $id");
-      $sentenciaSQL->execute();
-      $resultado = mysqli_query($conexion, $sentenciaSQL);
-      if(!$resultado) return null;
-      return mysqli_fetch_all($resultado, MYSQLI_ASSOC);
   }
+      //seleccionar:
+      $sentenciaSQL= "select * from movimientos where id_comunidad = $id_comunidad";
+      $stmt = mysqli_query($conexion, $sentenciaSQL);
+      $movimientos = mysqli_fetch_all($stmt, MYSQLI_ASSOC);
 
+      
 ?>
+
+
+
 
 <div class="col-md-5">
 
@@ -52,27 +83,32 @@
     <div class="card-body">
     <form method="POST" enctype="multipart/form-data">
       <div class="form-group">
-        <label>Fecha Movimiento</label>
-        <input name="fecha" id="fecha" type="fetch">
+        <input name="id_movimiento" id="id" type="hidden" value="<?php echo $id_movimiento; ?>" readonly>
+      </div> 
+      <div class="form-group">
+        <label for="fecha">Fecha Movimiento</label>
+        <input name="fecha" id="fecha" type="fetch" value="<?php echo $fecha; ?>">
       </div>  
       Tipo de Movimiento: <br/> 
       <div class="form-check" >
-        <input class="form-check-input" name="tipo" id="tipo" type="radio"  value="ingreso">
-        <label>Ingreso</label> <br/>
-        <input class="form-check-input" name="tipo" id="tipo" type="radio" value="gasto">
-        <label>Gasto</label>
+        <input class="form-check-input" name="tipo" id="tipo" type="radio"  value="ingreso" <?php if($tipo=="Ingreso") echo "checked"; ?>>
+        <label for="tipo">Ingreso</label> <br/>
+        <input class="form-check-input" name="tipo" id="tipo" type="radio" value="gasto" <?php if($tipo=="Gasto") echo "checked"; ?>>
+        <label for="tipo">Gasto</label>
       </div>      
       <div class="form-group">
-        <label id="concepto">Concepto </label>
-        <input name="concepto" type="text">
+        <label for="concepto">Concepto </label>
+        <input name="concepto" type="text" value="<?php echo $concepto; ?>">
       </div>      
       <div class="form-group">
-        <label id="cantidad">Cantidad €</label>
-        <input name="cantidad" type="decimal">
+        <label for="cantidad">Cantidad €</label>
+        <input name="cantidad" type="decimal" value="<?php echo $cantidad; ?>">
       </div>  
       <div class="form-group">
-        <label id="adjunto">Adjuntar Recibo/Factura</label>
-        <input name="adjunto" type="file">
+        <label for="adjunto">Adjuntar Recibo/Factura</label>
+        
+        <input name="nombre_fichero" type="hidden" value="<?php echo $adjunto; ?>">
+        <input name="adjunto" type="file" value="<?php echo $adjunto; ?>">
       </div>      
       <div class="btn-group" role="group" aria-label="">
         <button type="submit" class="btn btn-success" name="accion" value="add">Añadir</button>
@@ -89,10 +125,11 @@
        
 </div>
 <div class="col-md-7"> 
+  <a href="informes.php">Informe PDF</a>
     <table class="table">
         <thead>
             <tr>
-                <th>ID</th>
+                <th>Fecha</th>
                 <th>TipoMovimiento</th>
                 <th>Concepto</th>
                 <th>Cantidad</th>
@@ -107,22 +144,17 @@
               <td><?php echo $movimiento['tipo'];?></td>
               <td><?php echo $movimiento['concepto'];?></td>
               <td><?php echo $movimiento['cantidad'];?></td>
-              <td>
-                
-              Seleccionar | Borrar
-
-              <form method="$_POST">
-                <input type="text" name="accion" id="accion" value="<?php echo $movimiento['id']; ?>">
-
-                <input type="button" value="submit" name="accion" value="borrar" class="btn btn-danger"/>
-
-
+              <td>           
+              <form method="POST">
+                <input type="hidden" name="id_movimiento" value="<?php echo $movimiento['id']; ?>">
+                <input type="hidden" name="fecha"  value="<?php echo $movimiento['fecha']; ?>">
+                <input type="hidden" name="tipo" value="<?php echo $movimiento['tipo']; ?>">
+                <input type="hidden" name="concepto" value="<?php echo $movimiento['concepto']; ?>">
+                <input type="hidden" name="cantidad"  value="<?php echo $movimiento['cantidad']; ?>">
+                <input type="hidden" name="$adjunto"  value="<?php echo $movimiento['adjunto']; ?>">
+                <input type="submit" name="accion" value="seleccionar" class="btn btn-primary"/>                
               </form>
-
-
               </td>
-
-
             </tr>     
         <?php } ?>         
         </tbody>
