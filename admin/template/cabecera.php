@@ -27,10 +27,9 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
     <div class="nav navbar-nav">
         <a class="nav-item nav-link active" href="#">GestionaT<span class="sr-only">(current)</span></a>
-        <a class="nav-item nav-link" href="<?php echo $url;?>/admin/inicio.php">Inicio</a>
+        <a class="nav-item nav-link" href="<?php echo $url;?>/admin/index.php">Inicio</a>
         <a class="nav-item nav-link" href="<?php echo $url;?>/admin/seccion/presupuestos.php">Presupuestos</a>
-        <a class="nav-item nav-link" href="<?php echo $url;?>/admin/seccion/movimientos.php">Movimientos</a>
-        <a class="nav-item nav-link" href="<?php echo $url;?>/admin/seccion/informes.php">Informes</a>        
+        <a class="nav-item nav-link" href="<?php echo $url;?>/admin/seccion/movimientos.php">Movimientos</a>               
         <a class="nav-item nav-link" href="<?php echo $url;?>">Cerrar Sesión</a>
     </div>
 </nav>

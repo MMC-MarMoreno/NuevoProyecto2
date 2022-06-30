@@ -16,13 +16,7 @@ function usuario_comprobar_datos($nombre, $password) {
     $resultado = mysqli_query($conexion, $sql);
     if(!$resultado) return null;
     return mysqli_fetch_assoc($resultado);
-  }
-  //function usuario_borrar($nombre) {
-  //  global $db;
-    //$sql = "DELETE FROM usuarios WHERE nombre='$nombre'";
-   // $resultado = mysqli_query($db, $sql);
-   // return $resultado;
-  //} 
+  }  
   function usuario_registro($nombre, $password,$email, $calle, $numero, $poblacion, $ciudad, $codigo_postal) {
     global $conexion;
     $sql = "INSERT INTO comunidades VALUES(NULL,'$calle', '$numero', '$poblacion', '$ciudad', $codigo_postal)";
@@ -33,9 +27,6 @@ function usuario_comprobar_datos($nombre, $password) {
     $sql = "INSERT INTO usuarios VALUES(NULL,'$nombre', '$password', '$email', $id_comunidad )";
     $resultado = mysqli_query($conexion, $sql);
     if(!$resultado) return false;
-  
-    
-  
     return true;        
   }
   class ControladorUsuario{

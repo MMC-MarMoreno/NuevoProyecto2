@@ -1,3 +1,10 @@
+<?php
+ob_start();
+session_start();
+?>
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,21 +15,23 @@
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 </head>
 <body>
-<?php include("../template/cabecera.php"); ?>
 <?php include("../configuracion/conexion.php");
 
+$anio= $_GET['anio'] ?? date("Y");
+echo 'anio'.$anio;
 $id_comunidad =  $_SESSION['usuario']['id_comunidad'];
-$sentenciaSQL= "select * from movimientos where id_comunidad = $id_comunidad";
+$sentenciaSQL= "select * from movimientos where id_comunidad = $id_comunidad and YEAR(fecha)=$anio" ;
+echo $sentenciaSQL;
 $stmt = mysqli_query($conexion, $sentenciaSQL);
 $movimientos = mysqli_fetch_all($stmt, MYSQLI_ASSOC);
 
-$sentencia2SQL= "SELECT `movimientos`.`tipo`, `movimientos`.`cantidad` FROM `movimientos` WHERE `movimientos`.`tipo` = 'Gasto'; id_comunidad = $id_comunidad";
-$stmt2 = mysqli_query($conexion, $sentencia2SQL);
-$gastos = mysqli_fetch_all($stmt2, MYSQLI_ASSOC);
+// $sentencia2SQL= "SELECT `movimientos`.`tipo`, `movimientos`.`cantidad` FROM `movimientos` WHERE `movimientos`.`tipo` = 'Gasto'; id_comunidad = $id_comunidad";
+// $stmt2 = mysqli_query($conexion, $sentencia2SQL);
+// $gastos = mysqli_fetch_all($stmt2, MYSQLI_ASSOC);
 
-$sentencia3SQL= "SELECT `movimientos`.`tipo`, `movimientos`.`cantidad` FROM `movimientos` WHERE `movimientos`.`tipo` = 'Ingreso'; id_comunidad = $id_comunidad";
-$stmt3 = mysqli_query($conexion, $sentencia3SQL);
-$ingresos = mysqli_fetch_all($stmt2, MYSQLI_ASSOC);
+// $sentencia3SQL= "SELECT `movimientos`.`tipo`, `movimientos`.`cantidad` FROM `movimientos` WHERE `movimientos`.`tipo` = 'Ingreso'; id_comunidad = $id_comunidad";
+// $stmt3 = mysqli_query($conexion, $sentencia3SQL);
+// $ingresos = mysqli_fetch_all($stmt2, MYSQLI_ASSOC);
 
 //SELECT SUM(cantidad) WHERE tipo = 'Ingreso' FROM movimientos;
 //SELECT SUM(cantidad) WHERE tipo = 'Gasto' FROM movimientos;
@@ -51,15 +60,7 @@ $ingresos = mysqli_fetch_all($stmt2, MYSQLI_ASSOC);
               <td><?php echo $movimiento['fecha'];?></td>
               <td><?php echo $movimiento['tipo'];?></td>
               <td><?php echo $movimiento['concepto'];?></td>
-              <td><?php echo $movimiento['cantidad'];?></td>
-              <td>           
-              <form method="POST">
-                <input type="hidden" name="fecha"  value="<?php echo $movimiento['fecha']; ?>">
-                <input type="hidden" name="tipo" value="<?php echo $movimiento['tipo']; ?>">
-                <input type="hidden" name="concepto" value="<?php echo $movimiento['concepto']; ?>">
-                <input type="hidden" name="cantidad"  value="<?php echo $movimiento['cantidad']; ?>">                                
-              </form>
-              </td>
+              <td><?php echo $movimiento['cantidad'];?></td>              
             </tr>     
         <?php } ?>         
         </tbody>
@@ -72,60 +73,74 @@ $ingresos = mysqli_fetch_all($stmt2, MYSQLI_ASSOC);
 <div class="col-md-7"> 
      <table class="table">
         <thead>
-          <h1>Gastos Comunidad</h1><br/>
+          <h1>Ingreso anuales</h1><br/>
             <tr>
                 <th>Fecha</th>
+                <th>Tipo</th>
                 <th>Concepto</th>
                 <th>Cantidad</th> 
-                <th>Total a descontar</th>                               
+
             </tr>
         </thead>
         <tbody>
         <?php
-          foreach($gastos as $gasto){ ?>
+          $totalIngreso=0;
+          foreach($movimientos as $movimiento){
+            if($movimiento['tipo']=="Ingreso"){
+            $totalIngreso += $movimiento['cantidad'];
+          
+            ?>
             <tr>
-              <td><?php echo $movimiento['fecha'];?></td>
+            <td><?php  echo $movimiento['fecha'];?></td>
+              <td><?php  echo $movimiento['tipo'];?></td>
               <td><?php echo $movimiento['concepto'];?></td>
-              <td><?php echo $movimiento['cantidad'];?></td>
-              <td>           
-              <form method="POST">
-                <input type="hidden" name="fecha"  value="<?php echo $movimiento['fecha']; ?>">
-                <input type="hidden" name="concepto" value="<?php echo $movimiento['concepto']; ?>">
-                <input type="hidden" name="cantidad"  value="<?php echo $movimiento['cantidad']; ?>">                                
-              </form>
-              </td>
+              <td><?php echo $movimiento['cantidad'];?></td>              
             </tr>     
-        <?php } ?>         
+        <?php }
+        }
+        ?> 
+        <tr>
+          <td colspan="3">Total Ingresos</td>
+          <td><?php echo $totalIngreso; ?></td>
+        </tr>        
         </tbody>
     </table>
 </div>
 
+
 <div class="col-md-7"> 
      <table class="table">
         <thead>
-          <h1>Ingresos Comunidad</h1><br/>
+          <h1>Gastos</h1><br/>
             <tr>
                 <th>Fecha</th>
+                <th>Tipo</th>
                 <th>Concepto</th>
-                <th>Cantidad</th>                
+                <th>Cantidad</th> 
+
             </tr>
         </thead>
         <tbody>
         <?php
-          foreach($ingresos as $ingreso){ ?>
+          $totalGasto=0;
+          foreach($movimientos as $movimiento){
+            if($movimiento['tipo']=="Gasto"){
+            $totalGasto += $movimiento['cantidad'];
+          
+            ?>
             <tr>
-              <td><?php echo $movimiento['fecha'];?></td>
+            <td><?php  echo $movimiento['fecha'];?></td>
+              <td><?php  echo $movimiento['tipo'];?></td>
               <td><?php echo $movimiento['concepto'];?></td>
-              <td><?php echo $movimiento['cantidad'];?></td>
-              <td>           
-              <form method="POST">
-                <input type="hidden" name="fecha"  value="<?php echo $movimiento['fecha']; ?>">
-                <input type="hidden" name="concepto" value="<?php echo $movimiento['concepto']; ?>">
-                <input type="hidden" name="cantidad"  value="<?php echo $movimiento['cantidad']; ?>">                                
-              </form>
-              </td>
+              <td><?php echo $movimiento['cantidad'];?></td>              
             </tr>     
-        <?php } ?>         
+        <?php }
+        }
+        ?> 
+        <tr>
+          <td colspan="3">Total Gastos</td>
+          <td><?php echo $totalGasto; ?></td>
+        </tr>        
         </tbody>
     </table>
 </div>
@@ -136,6 +151,23 @@ $ingresos = mysqli_fetch_all($stmt2, MYSQLI_ASSOC);
 </body>
 </html>
 
+<?php
+$html=ob_get_clean();
 
+require_once '../libreria/dompdf_2-0-0/dompdf/autoload.inc.php';
+use Dompdf\Dompdf;
+$dompdf = new Dompdf();
+
+$options = $dompdf->getOptions();
+$options->set(array('isRemoteEnabled' => true));
+$dompdf->setOptions($options); 
+
+$dompdf->loadHtml("$html");
+$dompdf->setPaper('letter');
+//$dompdf->setPaper('A4', 'landscape');
+
+$dompdf->render();
+$dompdf->stream("resumen_.pdf", array("attachment" => true));
+?>
 
 

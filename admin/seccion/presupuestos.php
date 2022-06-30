@@ -6,20 +6,60 @@
 
  $id_comunidad =  $_SESSION['usuario']['id_comunidad'];
  $saldoAnioAnterior=(isset($_POST['saldoAnioAnterior']))?$_POST['saldoAnioAnterior']:"";
- $concepto=(isset($_POST['concepto']))?$_POST['concepto']:"";
- $cantidad=(isset($_POST['cantidad']))?$_POST['cantidad']:"";
+ $anio=(isset($_POST['anio']))?$_POST['anio']:"";
  $importeTotal=(isset($_POST['importeTotal']))?$_POST['importeTotal']:"";
  $accion=(isset($_POST['accion']))?$_POST['accion']:"";
+ $id_presu=(isset($_POST['id_presu']))?$_POST['id_presu']:"";
+ 
 
+$error="";
+    switch($accion){
 
-    
+        case "add":
+          $stmt = mysqli_prepare ($conexion, "INSERT INTO presupuestos (saldoAnioAnterior,anio,importeTotal,id_comunidad) VALUES (?, ?, ?, ?);");
+            mysqli_stmt_bind_param($stmt, 'didi', $saldoAnioAnterior, $anio, $importeTotal, $id_comunidad ); 
+            try{ mysqli_stmt_execute($stmt);  } 
+            catch(\Exception $ee)
+            {
+              $error= 'No se ha podido guardar el presupuesto';
+            }
+            
+            break;
+
+            case "modificar":
+             
+                $stmt = mysqli_prepare ($conexion, "UPDATE presupuestos SET saldoAnioAnterior = ? WHERE id=?");
+                
+                mysqli_stmt_bind_param($stmt, 'di', $saldoAnioAnterior, $id_comunidad );             
+                
+                mysqli_stmt_execute($stmt);
+                break;
+
+            case "borrar":
+                  //die("borrando $id_movimiento");
+                      $stmt = mysqli_prepare ($conexion, "DELETE FROM presupuestos WHERE id=?");
+                      mysqli_stmt_bind_param($stmt, 'i' , $id_presu);
+                      mysqli_stmt_execute($stmt);
+                      break;
+            case "ver":
+              header("location:lineasPresu.php?id_presu=$id_presu");
+              exit;
+
+           
+        }
       //obtención de datos
-      $sentenciaSQL= "SELECT `presupuestos`.`anio`, `presupuestos`.`saldoAnioAnterior`, `lineaspresu`.`concepto`, `lineaspresu`.`cantidad`, `presupuestos`.`importeTotal`  
-      FROM `presupuestos` LEFT JOIN `lineaspresu` ON `lineaspresu`.`id_presupuesto` = `presupuestos`.`id`; where id_comunidad = $id_comunidad";
+      $sentenciaSQL= "SELECT * FROM `presupuestos` where id_comunidad = $id_comunidad";
       $stmt = mysqli_query($conexion, $sentenciaSQL);
       $presupuestos = mysqli_fetch_all($stmt, MYSQLI_ASSOC);
+        
+   if ($error){
+    
+    
+    ?>
 
-      
+    <p class='text-error'><?php echo $error;?></p>
+    <?php
+    }   
 ?>
 
 
@@ -29,9 +69,9 @@
         Creación de Presupuestos
     </div>
     <div class="card-body">
-    <form method="POST" enctype="multipart/form-data">
+    <form method="POST">
       <div class="form-group">
-        <input name="id_presu" id="id" type="hidden" value="<?php echo $id_presu; ?>" readonly>
+        <input name="id_presu" id="id" type="hidden" value="<?php echo $id_presu; ?>">
       </div> 
       <div class="form-group">
         <label for="fecha">Introduce Año</label>
@@ -40,15 +80,8 @@
       <div class="form-group">
         <label for="fecha">Introduce Saldo Ejercicio Anterior</label>
         <input name="saldoAnioAnterior" id="saldoAnioAnterior" type="decimal" value="<?php echo $saldoAnioAnterior; ?>">
-      </div>    
-      <div class="form-group">
-        <label for="concepto">Concepto </label>
-        <input name="concepto" type="text" value="<?php echo $concepto; ?>">
-      </div>      
-      <div class="form-group">
-        <label for="cantidad">Cantidad €</label>
-        <input name="cantidad" type="decimal" value="<?php echo $cantidad; ?>">
-      </div>
+      </div>   
+      
       <div class="form-group">
         <input name="importeTotal" id="importeTotal" type="hidden" value="<?php echo $importeTotal; ?>" readonly>
       </div>       
@@ -72,10 +105,8 @@
         <thead>
             <tr>
                 <th>Ejercicio Año</th>
-                <th>Saldo Año anterior</th>
-                <th>Concepto</th>
-                <th>Cantidad</th>
-                <th>Importe Total</th>
+                <th>Saldo Año anterior</th> 
+                <th>Saldo Actual</th>               
             </tr>
         </thead>
         <tbody>
@@ -83,19 +114,16 @@
           foreach($presupuestos as $presupuesto){ ?>
             <tr>
               <td><?php echo $presupuesto['anio'];?></td>
-              <td><?php echo $presupuesto['saldoAnioAnterior'];?></td>
-              <td><?php echo $presupuesto['concepto'];?></td>
-              <td><?php echo $presupuesto['cantidad'];?></td>
-              <td><?php echo $presupuesto['importeTotal'];?></td>
+              <td><?php echo $presupuesto['saldoAnioAnterior'];?></td>  
+              <td><?php echo $presupuesto['importeTotal'];?></td>             
               <td>           
               <form method="POST">
-                <input type="hidden" name="id_presu" value="<?php echo $presupuesto['id']; ?>">
+                <input type="hidden" name="id_presu"  value="<?php echo $presupuesto['id']; ?>">
                 <input type="hidden" name="anio"  value="<?php echo $presupuesto['anio']; ?>">
-                <input type="hidden" name="saldoAnioAnterior" value="<?php echo $saldoAnioAnterior['tipo']; ?>">
-                <input type="hidden" name="concepto" value="<?php echo $presupuesto['concepto']; ?>">
-                <input type="hidden" name="cantidad"  value="<?php echo $presupuesto['cantidad']; ?>">
-                <input type="hidden" name="$importeTotal"  value="<?php echo $presupuesto['importeTotal']; ?>">
-                <input type="submit" name="accion" value="seleccionar" class="btn btn-primary"/>                
+                <input type="hidden" name="saldoAnioAnterior" value="<?php echo $presupuesto['saldoAnioAnterior']; ?>">   
+                <input type="hidden" name="importeTotal" value="<?php echo $presupuesto['importeTotal']; ?>">               
+                <input type="submit" name="accion" value="seleccionar" class="btn btn-primary"/> 
+                <input type="submit" name="accion" value="ver" class="btn btn-secondary"/>                
               </form>
               </td>
             </tr>     

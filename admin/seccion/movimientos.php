@@ -64,7 +64,8 @@
     }
   }
       //seleccionar:
-      $sentenciaSQL= "select * from movimientos where id_comunidad = $id_comunidad";
+      $anio= $_GET['anio'] ?? date("Y");
+      $sentenciaSQL= "select * from movimientos where id_comunidad = $id_comunidad and YEAR(fecha)=$anio";
       $stmt = mysqli_query($conexion, $sentenciaSQL);
       $movimientos = mysqli_fetch_all($stmt, MYSQLI_ASSOC);
 
